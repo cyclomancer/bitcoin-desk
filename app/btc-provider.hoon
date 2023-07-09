@@ -10,7 +10,7 @@
 ::  x/is-whitelisted/SHIP: bool, whether ship is whitelisted
 ::
 /-  *bitcoin, json-rpc, *btc-provider
-/+  dbug, default-agent, bl=btc, groupl=group, resource
+/+  dbug, default-agent, bl=btc, groupl=group, resource, verb
 ~%  %btc-provider-top  ..part  ~
 |%
 +$  card  card:agent:gall
@@ -24,6 +24,7 @@
 +$  state-1  [%1 =host-info =whitelist timer=(unit @da)]
 +$  state-2  [%2 =host-info =whitelist timer=(unit @da) interval=@dr]
 --
+%+  verb  &
 %-  agent:dbug
 =|  state-2
 =*  state  -
@@ -104,12 +105,15 @@
       :*  (start-ping-timer:hc ~s0)
           [%give %fact ~[/rpc] %btc-provider-status !>(`status`[%new-rpc api-url.comm network.comm])]
           ?~  timer  ~
-          [[%pass /block-time %arvo %b %rest u.timer] ~]
+          [[%pass /block-time/[(scot %da now.bowl)] %arvo %b %rest u.timer] ~]
       ==
     ::
         %set-external
       :_  state(host-info ['' src.comm %.n network.comm 0 *(set ship)])
       [%pass /ext/[(scot %p src.comm)] %agent src.comm^%btc-provider %watch /rpc]~
+      :: ?~  api-src.host-info  ~
+      :: :-  [%pass /ext/[(scot %p api-src.host-info)] %agent api-src.host-info^%btc-provider %leave ~]
+      :: ~
     ::
         %add-whitelist
       :-  ~
@@ -199,7 +203,7 @@
   ++  rpc-wire
     |=  act=action
     ^-  wire
-    /[-.q.act]/(scot %ux p.act)
+    /[-.q.act]/(scot %uv p.act)
     :: (scot %ux (cut 3 [0 20] eny.bowl))
   --
 ::
@@ -233,7 +237,8 @@
         ==
       ~|("btc-provider: blocked RPC client request from {<src.bowl>}" !!)
     ~&  "btc-provider: accepted RPC client {<src.bowl>}"
-    :-  [%give %fact ~ %noun !>(api-url.host-info)]~
+    ~&  give=host-info
+    :-  [%give %fact ~ %atom !>(api-url.host-info)]~
     this(clients.host-info (~(put in clients.host-info) src.bowl))
   ==
 ::
@@ -260,7 +265,7 @@
   ::
   ++  do-ping
     ^-  card
-    =/  act=action  [*@uvH %ping ~]
+    =/  act=action  [`@uvH`eny.bowl %ping ~]
     :*  %pass  /ping/[(scot %uv eny.bowl)]  %agent
         [our.bowl %btc-provider]  %poke
         %btc-provider-action  !>(act)
@@ -398,24 +403,34 @@
 ::
 ++  on-leave  on-leave:def
 ++  on-agent
-  |=  [=wire =sign:agent:gall]
+  |=  [wyr=(pole cord) =sign:agent:gall]
   ^-  (quip card _this)
-  ?+    wire  (on-agent:def wire sign)
-      [%ext @ ~]
-    ?>  ?&(=(src.bowl `@p`-.+.wire) =(api-src.host-info src.bowl))
-    ?+    -.sign  (on-agent:def wire sign)
+  ?+    wyr  (on-agent:def wyr sign)
+      [%ext ship=@ ~]
+    ?>  ?&(=(src.bowl (slav %p ship.wyr)) =(api-src.host-info src.bowl))
+    ?+    -.sign  (on-agent:def wyr sign)
+        %watch-ack
+      `this
+    ::
         %fact
-      ?.  ?=(%btc-provider-status p.cage.sign)  `this
-      =/  =status  !<(status q.cage.sign)
-      ?.  ?=(%new-rpc -.status)  `this
-      ?:  =(api-url.host-info api-url.status)  `this
-      =.  connected.host-info  %.n
-      =.  api-url.host-info  api-url.status
-      :_  this
-      :*  (send-status:hc [%disconnected ~])
-          (start-ping-timer:hc ~s0)
-          ?~  timer  ~
-          [[%pass /block-time %arvo %b %rest u.timer] ~]
+      ?+    p.cage.sign  `this
+          %atom
+        =/  url=@t  !<(@t q.cage.sign)
+        ~&  on-agent=url
+        `this(host-info [url src.bowl %.y network.host-info block.host-info clients.host-info])
+      ::
+          %btc-provider-status
+        =/  =status  !<(status q.cage.sign)
+        ?.  ?=(%new-rpc -.status)  `this
+        ?:  =(api-url.host-info api-url.status)  `this
+        =.  connected.host-info  %.n
+        =.  api-url.host-info  api-url.status
+        :_  this
+        :*  (send-status:hc [%disconnected ~])
+            (start-ping-timer:hc ~s0)
+            ?~  timer  ~
+            [[%pass /block-time %arvo %b %rest u.timer] ~]
+        ==
       ==
     ==
   ==
