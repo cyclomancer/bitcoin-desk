@@ -115,13 +115,13 @@
       ?>  !=(our.bowl src.comm)
       ?:  =(src.host-info `src.comm)  `state
       :_  state(host-info [~ `src.comm %.n network.comm 0 *(set ship)])
-      :-  [%pass /ext/[(scot %p src.comm)] %agent src.comm^%btc-provider %watch /rpc]
-      ?~  src.host-info  ~
-      ?:  =(our.bowl u.src.host-info)  ~
-      :-  :*  %pass   /ext/[(scot %p u.src.host-info)]
-              %agent  u.src.host-info^%btc-provider  %leave  ~
-          ==
-      ~
+      :-  [%pass /ext/[(scot %p src.comm)] %agent src.comm^%btc-provider %watch /rpc]  ~
+      :: ?~  src.host-info  ~
+      :: ?:  =(our.bowl u.src.host-info)  ~
+      :: :-  :*  %pass   /ext/[(scot %p u.src.host-info)]
+      ::         %agent  u.src.host-info^%btc-provider  %leave  ~
+      ::     ==
+      :: ~
     ::
         %add-whitelist
       :-  ~
@@ -248,7 +248,7 @@
       ~|("btc-provider: blocked RPC client request from {<src.bowl>}" !!)
     ~&  "btc-provider: accepted RPC client {<src.bowl>}"
     ~&  give=host-info
-    :-  [%give %fact ~ %atom !>([url.u.api.host-info port.u.api.host-info])]~
+    :-  [%give %fact ~ %btc-provider-status !>(`status`[%new-rpc url.u.api.host-info port.u.api.host-info network.host-info])]~
     this(clients.host-info (~(put in clients.host-info) src.bowl))
   ==
 ::
@@ -425,23 +425,9 @@
     ::
         %fact
       ?+    p.cage.sign  `this
-          %atom
-        =/  [url=@t port=@t]  !<([@t @t] q.cage.sign)
-        ~&  on-agent=url
-        =.  host-info
-          :*  `[url port %.n]  `src.bowl  %.y
-              network.host-info  block.host-info
-              clients.host-info
-          ==
-        :_  this
-        [(start-ping-timer:hc ~s0)]~
-      ::
           %btc-provider-status
-        ?~  api.host-info  `this
         =/  =status  !<(status q.cage.sign)
         ?.  ?=(%new-rpc -.status)  `this
-        ?:  ?&(=(url.u.api.host-info url.status) =(port.u.api.host-info port.status))
-          `this
         =.  connected.host-info  %.n
         =.  api.host-info  `[url.status port.status %.n]
         :_  this

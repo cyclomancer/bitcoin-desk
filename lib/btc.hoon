@@ -396,7 +396,8 @@
   ^-  request:http
   =/  target
     %-  crip
-    :~  ?:  local.api-state  'http://127.0.0.1'  url.api-state
+    :~  'http://'
+        ?:  local.api-state  '127.0.0.1'  url.api-state
         ':'
         port.api-state
     ==
