@@ -2,12 +2,26 @@
 |%
 +$  host-info
   $:  api-url=@t
-      api-src=@p
       connected=?
       =network
       block=@ud
       clients=(set ship)
   ==
++$  host-info-2
+  $:  api=(unit api-state)
+      src=(unit ship)
+      connected=?
+      =network
+      block=@ud
+      clients=(set ship)
+  ==
++$  api-state  [url=@t port=@t local=?]
+:: +$  api-state
+::   $%  [%unset ~]
+::       [%setting-ext targ=ship]
+::       [%set-loc =api-data]
+::       [%set-ext src=ship =api-data]
+::   ==
 +$  whitelist
   $:  public=?
       kids=?
@@ -22,7 +36,7 @@
       [%groups groups=(set resource:resource)]
   ==
 +$  command
-  $%  [%set-credentials api-url=@t =network]
+  $%  [%set-credentials url=@t port=@t local=? =network]
       [%set-external src=@p =network]
       [%add-whitelist wt=whitelist-target]
       [%remove-whitelist wt=whitelist-target]
@@ -78,7 +92,7 @@
 +$  status
   $%  [%connected =network block=@ud fee=(unit sats)]
       [%new-block =network block=@ud fee=(unit sats) blockhash=hexb blockfilter=hexb]
-      [%new-rpc api-url=@t =network]
+      [%new-rpc url=@t port=@t =network]
       [%disconnected ~]
   ==
 ::

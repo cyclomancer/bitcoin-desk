@@ -18,15 +18,17 @@
     $%  state-0
         state-1
         state-2
+        state-3
     ==
 ::
 +$  state-0  [%0 =host-info =whitelist]
 +$  state-1  [%1 =host-info =whitelist timer=(unit @da)]
 +$  state-2  [%2 =host-info =whitelist timer=(unit @da) interval=@dr]
++$  state-3  [%3 host-info=host-info-2 =whitelist timer=(unit @da) interval=@dr]
 --
 %+  verb  &
 %-  agent:dbug
-=|  state-2
+=|  state-3
 =*  state  -
 ^-  agent:gall
 =<
@@ -41,7 +43,7 @@
   =|  wl=^whitelist
   :-  ~
   %_  this
-    host-info  ['' our.bowl connected=%.n %main block=0 clients=*(set ship)]
+    host-info  [~ ~ connected=%.n %main block=0 clients=*(set ship)]
     whitelist  wl(public %.n, kids %.n)
     timer      ~
     interval   ~m1
@@ -55,17 +57,15 @@
   |=  old-state=vase
   ^-  (quip card _this)
   =/  old  !<(versioned-state old-state)
-  ?-  -.old
+  ?-    -.old
+      %3
+    `this(state old)
       %2
-    [~ this(state old)]
-  ::
+    `this(state [%3 [~ ~ %.n %main 0 *(set ship)] whitelist.old ~ ~m1])
       %1
-    `this(state [%2 host-info.old whitelist.old timer.old ~m1])
-  ::
+    `this(state [%3 [~ ~ %.n %main 0 *(set ship)] whitelist.old ~ ~m1])
       %0
-    :_  this(state [%2 host-info.old whitelist.old ~ ~m1])
-    ?:  =('' api-url.host-info.old)  ~
-    ~[(start-ping-timer:hc ~s0)]
+    `this(state [%3 [~ ~ %.n %main 0 *(set ship)] whitelist.old ~ ~m1])
   ==
 ::
 ++  on-poke
@@ -98,22 +98,30 @@
     ^-  (quip card _state)
     ?-  -.comm
         %set-credentials
+      =/  =api-state  [url.comm port.comm local.comm]
       :_  %_  state
-              host-info  [api-url.comm our.bowl %.n network.comm 0 *(set ship)]
+              host-info  [`api-state `our.bowl %.n network.comm 0 *(set ship)]
               timer      `now.bowl
           ==
       :*  (start-ping-timer:hc ~s0)
-          [%give %fact ~[/rpc] %btc-provider-status !>(`status`[%new-rpc api-url.comm network.comm])]
+          :*  %give  %fact  ~[/rpc]  %btc-provider-status
+              !>(`status`[%new-rpc url.comm port.comm network.comm])
+          ==
           ?~  timer  ~
           [[%pass /block-time/[(scot %da now.bowl)] %arvo %b %rest u.timer] ~]
       ==
     ::
         %set-external
-      :_  state(host-info ['' src.comm %.n network.comm 0 *(set ship)])
-      [%pass /ext/[(scot %p src.comm)] %agent src.comm^%btc-provider %watch /rpc]~
-      :: ?~  api-src.host-info  ~
-      :: :-  [%pass /ext/[(scot %p api-src.host-info)] %agent api-src.host-info^%btc-provider %leave ~]
-      :: ~
+      ?>  !=(our.bowl src.comm)
+      ?:  =(src.host-info `src.comm)  `state
+      :_  state(host-info [~ `src.comm %.n network.comm 0 *(set ship)])
+      :-  [%pass /ext/[(scot %p src.comm)] %agent src.comm^%btc-provider %watch /rpc]
+      ?~  src.host-info  ~
+      ?:  =(our.bowl u.src.host-info)  ~
+      :-  :*  %pass   /ext/[(scot %p u.src.host-info)]
+              %agent  u.src.host-info^%btc-provider  %leave  ~
+          ==
+      ~
     ::
         %add-whitelist
       :-  ~
@@ -197,7 +205,7 @@
   ++  req-card
     |=  [act=action ract=action:rpc-types]
     =/  req=request:http
-      (gen-request:bl host-info ract)
+      (gen-request:bl (need api.host-info) ract)
     [%pass (rpc-wire act) %arvo %i %request req *outbound-config:iris]
   ::
   ++  rpc-wire
@@ -232,13 +240,15 @@
     `this
   ::
       [%rpc ~]
-    ?.  ?&  =(api-src.host-info our.bowl)
+    ?~  api.host-info  !!
+    ?~  src.host-info  !!
+    ?.  ?&  =(u.src.host-info our.bowl)
             (is-whitelisted:hc src.bowl)
         ==
       ~|("btc-provider: blocked RPC client request from {<src.bowl>}" !!)
     ~&  "btc-provider: accepted RPC client {<src.bowl>}"
     ~&  give=host-info
-    :-  [%give %fact ~ %atom !>(api-url.host-info)]~
+    :-  [%give %fact ~ %atom !>([url.u.api.host-info port.u.api.host-info])]~
     this(clients.host-info (~(put in clients.host-info) src.bowl))
   ==
 ::
@@ -407,7 +417,8 @@
   ^-  (quip card _this)
   ?+    wyr  (on-agent:def wyr sign)
       [%ext ship=@ ~]
-    ?>  ?&(=(src.bowl (slav %p ship.wyr)) =(api-src.host-info src.bowl))
+    ?~  src.host-info  `this
+    ?>  ?&(=(src.bowl (slav %p ship.wyr)) =(u.src.host-info src.bowl))
     ?+    -.sign  (on-agent:def wyr sign)
         %watch-ack
       `this
@@ -415,19 +426,28 @@
         %fact
       ?+    p.cage.sign  `this
           %atom
-        =/  url=@t  !<(@t q.cage.sign)
+        =/  [url=@t port=@t]  !<([@t @t] q.cage.sign)
         ~&  on-agent=url
-        `this(host-info [url src.bowl %.y network.host-info block.host-info clients.host-info])
+        =.  host-info
+          :*  `[url port %.n]  `src.bowl  %.y
+              network.host-info  block.host-info
+              clients.host-info
+          ==
+        :_  this
+        [(start-ping-timer:hc ~s0)]~
       ::
           %btc-provider-status
+        ?~  api.host-info  `this
         =/  =status  !<(status q.cage.sign)
         ?.  ?=(%new-rpc -.status)  `this
-        ?:  =(api-url.host-info api-url.status)  `this
+        ?:  ?&(=(url.u.api.host-info url.status) =(port.u.api.host-info port.status))
+          `this
         =.  connected.host-info  %.n
-        =.  api-url.host-info  api-url.status
+        =.  api.host-info  `[url.status port.status %.n]
         :_  this
         :*  (send-status:hc [%disconnected ~])
             (start-ping-timer:hc ~s0)
+            ::  todo ??
             ?~  timer  ~
             [[%pass /block-time %arvo %b %rest u.timer] ~]
         ==

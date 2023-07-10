@@ -392,10 +392,16 @@
   ==
 ::
 ++  gen-request
- |=  [=host-info:bp ract=action:rpc-types:bp]
+ |=  [=api-state:bp ract=action:rpc-types:bp]
   ^-  request:http
+  =/  target
+    %-  crip
+    :~  ?:  local.api-state  'http://127.0.0.1'  url.api-state
+        ':'
+        port.api-state
+    ==
   %+  rpc-action-to-http
-  api-url.host-info  ract
+  target  ract
 ::
 ++  rpc
   =,  dejs:format
